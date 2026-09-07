@@ -1,0 +1,52 @@
+# Tool configuration for the pipeline tooling in this repo.
+#
+# The lint, format, import-order, and type-check settings mirror `LMCache/LMCache` so that
+# Python written here meets the upstream standard without rework. See AGENTS.md.
+#
+# There is no [project] table yet: nothing here is packaged or published. Add one when the
+# pipeline tooling becomes an installable package.
+
+[tool.ruff]
+# same as Black's default line length
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # flake8-bugbear
+    "B",
+    # flake8-self (private member access)
+    "SLF",
+    # pylint: logging call has more arguments than format placeholders
+    "PLE1205",
+]
+ignore = [
+    # star imports
+    "F405", "F403",
+    # lambda expression assignment
+    "E731",
+    # Loop control variable not used within loop body
+    "B007",
+]
+
+[tool.ruff.lint.isort]
+# same as .isort.cfg
+from-first = true
+
+[tool.mypy]
+# Upstream pins platform = "linux"; this repo's tooling is developed on macOS too, so the
+# platform is left to the host.
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.codespell]
+# Words that are correct in this repo but look like typos.
+#   lmcache — the project name
+#   koko    — the localization vendor named in the pipeline plan
+#   te      — inherited from upstream's ignore list
+ignore-words-list = "lmcache,koko,te"
+skip = "./.git,./.venv,*.lock"
