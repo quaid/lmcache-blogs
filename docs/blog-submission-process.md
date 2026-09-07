@@ -1,14 +1,25 @@
 # How to get a blog post written
 
-Four ways in. Three of them end in the same place: a card on the board with
-a skeleton attached. Pick whichever is least annoying for you.
+Five ways in. Pick whichever is least annoying for you.
 
-**You do not write the post.** You write a skeleton — rough notes in your
-own language — and the pipeline plus an editor turn it into a post. You
-review it before it goes out.
+**If the post is not written yet**, paths A, B, and C all end in the same
+place: a card on the board with a skeleton attached. **You do not write the
+post** — you write a skeleton, rough notes in your own language, and the
+pipeline plus an editor turn it into a post. You review it before it goes
+out.
 
-Unless you already did. If the post is written, skip to
-[Path D](#path-d--you-already-wrote-the-whole-post).
+**If the post is already written**, there are two paths and the difference
+is only this: *does the technical content still need checking?*
+
+- **No — it is already sound**, because you built the thing, or because
+  someone at your org or a third party already reviewed it. That is the
+  common case. → [Path E](#path-e--a-finished-post-ready-for-copyedit)
+- **Yes — it wants a technical review**, because you wrote up work that is
+  not yours, or you would rather a second pair of eyes confirmed the details.
+  → [Path D](#path-d--a-draft-that-needs-technical-review)
+
+Picking wrong is not a disaster — a card moves lanes and nobody minds — but
+picking right saves a round trip.
 
 **Write in your own language.** Do not translate for us. Translating on the
 way in loses the details that make a post good, and we localize on the way
@@ -82,32 +93,56 @@ want this in the same PR as your code.
 
 ---
 
-## Path D — you already wrote the whole post
+## Path D — a draft that needs technical review
 
-Best for: the post exists. You wrote it on a plane, or it went out on your own
-blog first, or you drafted it for a talk. Do not put a finished post back
-through drafting.
+Best for: the writing is done, the verification is not. You wrote up work
+that is not yours, or you are describing a system you do not own, or you
+would rather someone confirmed the details before your name is on it.
 
-1. Open a new issue and choose **Blog post from an existing draft**.
+**"Draft" here means the technical content still wants checking.** If it does
+not, you want [Path E](#path-e--a-finished-post-ready-for-copyedit) — most
+already-written posts do.
+
+1. Open a new issue and choose **Blog post draft — needs technical review**.
 2. Link the draft, or drag the file onto the issue.
-3. Pick the lane it should enter — `editorial`, `technical`, or `translations`.
-   Editorial is the normal choice; the template explains the other two.
-4. Fill in **Where your claims come from**. This is the one section that
-   carries real weight on this path, and it is worth explaining why.
-
-   A generated draft arrives with a claims ledger: every assertion that did
-   not come from the skeleton or the diff, listed with a pointer to where it
-   appears. Technical review just checks the ledger. Your draft has no
-   ledger, so if you skip this section a reviewer has to re-verify the whole
-   piece from scratch — which makes "already written" the *slowest* path
-   instead of the fastest. A bullet list of sources fixes that.
-
+3. Pick the lane — `editorial` if nobody has edited it (the normal choice),
+   `technical` if an editor already has. Either way it passes through
+   Technical review; that is the point of this path.
+4. Optionally, say where your claims came from, and — more useful — **what
+   you are least sure about**. Neither is required. Anything you put there
+   points the reviewer at the part that needs them instead of the whole
+   piece. Any format works; the template lists several and does not care
+   what you drafted in.
 5. Submit. Your card skips **Idea**, **Claimed**, and **Drafting** and lands
    in the lane you picked.
 
-Claiming a later lane than the draft has earned does not save time: it gets
-sent back, and the round trip is slower than the review you tried to skip.
-When unsure, pick editorial.
+---
+
+## Path E — a finished post, ready for copyedit
+
+Best for: the post is done *and* the technical content is already sound. This
+is the normal path for a post written by the person who built the thing, and
+for a post from another organization that already reviewed it.
+
+1. Open a new issue and choose **Finished blog post — ready for copyedit**.
+2. Link the post, or drag the file onto the issue.
+3. Say **who verified the technical content** — you, because you built it;
+   someone at your org; or an external review. Usually one line. We take your
+   word for it; this is just the record of whose word it was.
+4. Say how much editing you are comfortable with: `full` (structure and
+   phrasing are ours to adjust, within house style) or `light` (copyedit
+   only — grammar, typos, consistency). Either is fine and nobody will argue.
+5. Submit. Your card enters **Editorial review** for the copyedit, then goes
+   to **Translations**. **It does not pass through Technical review.**
+
+Two checks still apply, because they apply to everything we publish
+regardless of who verified it: every number carries the conditions it holds
+under, and placement respects the LMCache/Tensormesh boundary. Both are
+one-liners on the form.
+
+If you get to "who verified the technical content" and are not sure what to
+put, that is worth noticing — the post probably wants Path D. No harm in it,
+and it is faster than a correction after publishing.
 
 ## If it is not about a PR
 
@@ -119,15 +154,22 @@ that carry the piece.
 
 ```
 Idea → Claimed → Drafting → Editorial review → Technical review → Translations → Published
-                    ↑              ↑                   ↑                ↑
-                Paths A/B/C     Path D            Path D            Path D
-                                (editorial)       (technical)       (translations)
+                    ↑              ↑    ↑              ↑
+                Paths A/B/C   Path D    Path E     Path D
+                              (editorial)          (technical)
 ```
 
-Seven columns. Paths A, B, and C all enter at **Drafting**. Path D enters at
-whichever review lane you claimed. **Idea** and **Claimed** are the lanes for
-work nobody has started yet — no intake path lands there, they are where a
-post gets proposed and picked up.
+Seven columns.
+
+- **Paths A, B, C** enter at **Drafting** — the skeleton needs turning into a
+  post first.
+- **Path D** enters at **Editorial review** or **Technical review**, and
+  always passes through Technical review.
+- **Path E** enters at **Editorial review** for the copyedit and then goes
+  **straight to Translations, skipping Technical review.** That skip is the
+  whole difference between D and E.
+- **Idea** and **Claimed** take no intake path. They are where a post gets
+  proposed and picked up before anyone has written anything.
 
 You get a Slack DM when your card moves and when something needs you. If a
 card sits waiting on you for more than two days, you get a nudge.

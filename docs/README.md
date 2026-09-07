@@ -6,7 +6,7 @@ Three documents, three audiences. Start with whichever describes you.
 |---|---|
 | [`blog-submission-process.md`](blog-submission-process.md) | **A contributor who landed a PR.** The three intake paths, and what happens to your card after you submit. Start here. |
 | [`templates/blog-post-skeleton.md`](templates/blog-post-skeleton.md) | **The skeleton itself**, as a file you can download and fill in for intake path C. Byte-identical to the issue template. |
-| [`pipeline/skeleton-to-prompt.md`](pipeline/skeleton-to-prompt.md) | **Whoever is building or debugging the pipeline.** Parse contract, PR hydration, prompt assembly, output contract, claims ledger — plus the separate, smaller contract for an already-written draft. |
+| [`pipeline/skeleton-to-prompt.md`](pipeline/skeleton-to-prompt.md) | **Whoever is building or debugging the pipeline.** Parse contract, PR hydration, prompt assembly, output contract, claims ledger — plus the two smaller contracts for already-written posts. |
 
 ## The one-paragraph version
 
@@ -16,9 +16,9 @@ and what was interesting about fixing it. The pipeline hydrates that skeleton wi
 own metadata and diff, assembles a prompt, and generates a draft. A human editor and the
 original author review it before it goes out.
 
-The exception is a post that is already written. That takes the second issue template and
-skips the drafting lanes entirely — see path D in the process doc, and "The other template"
-in the parse contract.
+The exception is a post that is already written. Those take one of the other two templates
+and skip the drafting lanes entirely — see paths D and E in the process doc, and templates
+two and three in the parse contract.
 
 ## These three documents are one agreement
 
@@ -35,15 +35,21 @@ three angles, and they drift silently:
 Change one, check the other two. A PR that touches a heading without touching the parse
 contract table will be sent back — see the checklist in [`../AGENTS.md`](../AGENTS.md).
 
-## The two issue templates
+## The three issue templates
 
-| Template | For | Enters at |
-|---|---|---|
-| `.github/ISSUE_TEMPLATE/blog-post.md` | notes about a PR; someone else writes the post | Drafting |
-| `.github/ISSUE_TEMPLATE/blog-post-draft.md` | a finished post that needs review, not writing | the review lane the author claims |
+| Template | For | Enters at | Technical review? |
+|---|---|---|---|
+| `blog-post.md` | notes about a PR; someone else writes the post | Drafting | yes |
+| `blog-post-draft.md` | written, but the technical content still needs checking | Editorial or Technical review | **yes — that is the point** |
+| `blog-post-complete.md` | written *and* already technically sound | Editorial review | **no — skips to Translations** |
 
-Only the first has a downloadable copy under `templates/`, because only the first has an
-intake path that hands you a file to fill in offline. A finished draft is already a file.
+The last two both take an already-written post, and the **only** thing separating them is
+whether the technical content still needs checking. Most already-written submissions are the
+third kind: a post by the person who built the thing, or one from another org that already
+reviewed it. Template two is the exception.
+
+Only the first has a downloadable copy under `templates/`, because only the first hands you a
+file to fill in offline. A finished post is already a file.
 
 ## Where the skeleton lives
 
