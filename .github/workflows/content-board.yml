@@ -8,9 +8,11 @@ name: Content board
 #   ensure-labels -- the intake templates only apply labels that already exist,
 #                    so create any the templates declare but the repo lacks
 #
-# Board writes need a token with `project` scope. GITHUB_TOKEN cannot write to a
-# user-owned Projects V2 board, so a PROJECT_TOKEN secret is required. Setup and
-# the routing table are in docs/pipeline/board-routing.md.
+# Board writes need a CLASSIC token with `project` scope, in a PROJECT_TOKEN
+# secret. Two things make that necessary rather than a preference:
+# GITHUB_TOKEN cannot write to Projects V2 at all, and a fine-grained PAT has no
+# account-level Projects permission, so it cannot reach a *user-owned* board.
+# Setup and the routing table are in docs/pipeline/board-routing.md.
 
 on:
   issues:
@@ -61,8 +63,10 @@ jobs:
               echo "### Content board routing is not active"
               echo
               echo "The \`PROJECT_TOKEN\` secret is not set, so cards cannot be"
-              echo "added to the board. GITHUB_TOKEN cannot write to a"
-              echo "user-owned Projects V2 board."
+              echo "added to the board. GITHUB_TOKEN cannot write to Projects"
+              echo "V2, and a fine-grained PAT has no account-level Projects"
+              echo "permission, so this needs a **classic** token with the"
+              echo "\`project\` scope."
               echo
               echo "Setup: **docs/pipeline/board-routing.md**."
               echo

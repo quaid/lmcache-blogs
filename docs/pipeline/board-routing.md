@@ -13,13 +13,48 @@ The mechanism is `.github/workflows/content-board.yml` plus
 workflow permission that grants it; Projects V2 is outside the repository
 permission model. So the workflow needs its own token.
 
-1. Create a fine-grained personal access token with **read and write access to
-   your projects**, or a classic token with the **`project`** scope.
-2. Add it to this repo as a secret named **`PROJECT_TOKEN`**
-   (Settings → Secrets and variables → Actions).
+### It has to be a classic token
 
-A GitHub App installation token with project permissions works too, and is the
-better long-term answer if this ever moves under the LMCache org.
+**A fine-grained PAT cannot do this**, and it is worth being precise about why,
+because the natural assumption is that it can.
+
+Fine-grained tokens expose a `Projects` permission only under **Organization
+permissions**. There is no account-level equivalent, so a fine-grained token has
+no way to express "read and write my *user-owned* projects" — and this board is
+user-owned (`github.com/users/quaid/projects/5`). The permission is not hidden
+somewhere in the UI; it does not exist. It is a
+[long-standing open request](https://github.com/orgs/community/discussions/36441),
+not an oversight.
+
+So:
+
+1. Create a **classic** personal access token with the **`project`** scope
+   (Settings → Developer settings → Personal access tokens → Tokens (classic)).
+2. Add it to this repo as a secret named `PROJECT_TOKEN`:
+
+   ```bash
+   gh secret set PROJECT_TOKEN --repo quaid/lmcache-blogs
+   ```
+
+   It prompts for the value. Avoid `--body "<token>"`, which puts the token in
+   your shell history; `gh secret set PROJECT_TOKEN < tokenfile` is the
+   non-interactive alternative.
+
+**Accept the tradeoff knowingly:** classic `project` scope is not scopeable to
+one project or one repository. The token can read and write *every* project the
+account can reach. That is the cost of a user-owned board, and it is the reason
+the alternative below is worth considering.
+
+### The alternative: move the board to the org
+
+If the board moves under the **LMCache organization**, the good options open up —
+a fine-grained PAT with the org-level `Projects` permission, scoped to this
+repository, or a GitHub App installation. Both are narrower than a classic
+token.
+
+That is an ownership decision rather than a technical one, so it is not made
+here. But if the broad scope of a classic token is a problem, moving the board
+is the fix, not a different token.
 
 **Until that secret exists, routing does not happen** — and the workflow says so
 loudly rather than failing one API call at a time and looking like an outage.

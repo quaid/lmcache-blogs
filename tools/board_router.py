@@ -18,9 +18,10 @@ combination of labels produces a decision, and no input is silently ignored. An
 issue the router cannot place is labelled ``needs-triage`` and commented on
 rather than dropped.
 
-Board writes need a token with ``project`` scope. ``GITHUB_TOKEN`` cannot write
-to a user-owned Projects V2 board, so the workflow passes a separate secret; see
-``docs/pipeline/board-routing.md``.
+Board writes need a **classic** token with the ``project`` scope, which the
+workflow passes as a separate secret. ``GITHUB_TOKEN`` cannot write to Projects
+V2, and a fine-grained PAT has no account-level Projects permission, so it
+cannot reach a user-owned board. See ``docs/pipeline/board-routing.md``.
 """
 
 # Future
@@ -223,8 +224,8 @@ def run_gh(args: list[str], token_env: str = "GH_TOKEN") -> str:
     token = os.environ.get(token_env, "")
     if not token:
         raise RuntimeError(
-            f"{token_env} is not set. Board writes need a token with project "
-            "scope; see docs/pipeline/board-routing.md."
+            f"{token_env} is not set. Board writes need a classic token with "
+            "the project scope; see docs/pipeline/board-routing.md."
         )
     env = dict(os.environ, GH_TOKEN=token)
     result = subprocess.run(
