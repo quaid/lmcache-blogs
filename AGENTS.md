@@ -55,7 +55,8 @@ The default branch is `main`. Base all new branches and pull requests against `m
 
 ```
 .github/ISSUE_TEMPLATE/blog-post.md   canonical blog-post skeleton / issue template
-.github/ISSUE_TEMPLATE/blog-post-draft.md  intake for an already-written post (path D)
+.github/ISSUE_TEMPLATE/blog-post-draft.md     written, needs technical review (path D)
+.github/ISSUE_TEMPLATE/blog-post-complete.md  written and verified, needs copyedit (path E)
 .github/PULL_REQUEST_TEMPLATE.md
 docs/README.md                        map of the docs
 docs/blog-submission-process.md       contributor-facing: the three intake paths
@@ -195,11 +196,11 @@ LMCache's conventions apply unchanged. The ones that bite first:
 These are load-bearing. Violating one produces a post that has to be thrown away, or worse,
 one that gets published wrong.
 
-- **The `##` headings in both issue templates are the schema.** The parser splits on them by
-  name, and strips the ` [CORE]` suffix before matching. Renaming, reordering, or deleting a
-  heading is a breaking change: update the matching parse contract table in
-  `docs/pipeline/skeleton-to-prompt.md` in the same PR, or don't do it. There are two tables
-  — one per template.
+- **The `##` headings in all three blog issue templates are the schema.** The parser splits
+  on them by name, and strips the ` [CORE]` suffix before matching. Renaming, reordering, or
+  deleting a heading is a breaking change: update the matching parse contract table in
+  `docs/pipeline/skeleton-to-prompt.md` in the same PR, or don't do it. There are three
+  tables — one per template.
 - **Never invent a number.** Not one. If a skeleton's `Numbers` section is empty, the post
   has no benchmarks in it.
 - **Never state a number without its conditions** — hardware, model, batch size, workload
@@ -208,12 +209,23 @@ one that gets published wrong.
 - **Every assertion that did not come from the skeleton, the diff, or a linked issue goes in
   the claims ledger** at the end of the draft, with a pointer to where it appears. The
   ledger is what makes technical review a bounded task.
-- **An already-written draft (path D) has no ledger, and its `sources` section is the
-  substitute.** It cannot be reconstructed after the fact — nothing knows which sentences
-  were sourced and which were remembered. If `sources` is empty, emit a `QUESTION FOR
-  AUTHOR` and leave the card where it is. Do not verify the claims yourself to fill the
-  gap: that is unbounded work, and it is the failure mode that makes "already written" the
-  slowest path instead of the fastest.
+- **An already-written post takes one of two paths, and the only difference is whether the
+  technical content still needs checking.** Path D (`blog-post-draft.md`) goes through
+  Technical review; path E (`blog-post-complete.md`) skips it. The author decides. Most
+  already-written submissions are path E — a post by the person who built the thing, or one
+  another org already reviewed — so treat D as the exception, not the default.
+- **On path D, `sources` and `uncertain` are optional hints, not gates.** They make the
+  technical review faster; they do not authorize it, because the review happens either way.
+  Empty is not an error: route the card and note *"no sourcing supplied"* for the reviewer.
+  Never hold the card or emit `QUESTION FOR AUTHOR` over them, and accept any shape the
+  author used — inline links, a bullet list, "it is all in PR #1234", an attached log. We do
+  not know what they drafted in and it does not matter.
+- **On path E, `verified_by` is an attestation, not a verification.** It records who vouched,
+  so a later mistake has a name attached. Take it at face value: do not re-derive it from
+  the diff, and do not quietly route the card through Technical review because it looks
+  thin — that is the wasted round trip path E exists to avoid. Never ask a path E post for a
+  claims ledger; that is asking for the review it just skipped. Honor `copyedit: light` when
+  set — it is the author declining a rewrite, not an opening position.
 - **`Notes for the editor` is never rendered.** It constrains the generator and stops there.
 - **An empty required field is a `QUESTION FOR AUTHOR` block, not a guess.** A draft with
   open questions does not advance to editorial.
@@ -242,7 +254,7 @@ Self-check before opening a PR, and check when reviewing one:
 ### Skeleton and contracts
 - [ ] `.github/ISSUE_TEMPLATE/blog-post.md` and `docs/templates/blog-post-skeleton.md` are
       byte-identical.
-- [ ] Any heading change is reflected in the matching parse contract table (there are two,
+- [ ] Any heading change is reflected in the matching parse contract table (there are three,
       one per template).
 - [ ] A new or changed `entry_lane` value maps to a real column on the board.
 - [ ] The five `[CORE]` fields still take a contributor about ten minutes. If the skeleton

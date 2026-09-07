@@ -33,7 +33,8 @@ has the full table.
 | [`docs/blog-submission-process.md`](docs/blog-submission-process.md) | Contributor-facing. The three intake paths and what happens to a card. |
 | [`docs/pipeline/skeleton-to-prompt.md`](docs/pipeline/skeleton-to-prompt.md) | Machine-facing. Parse contract, hydration, prompt assembly, output contract, claims ledger. |
 | [`.github/ISSUE_TEMPLATE/blog-post.md`](.github/ISSUE_TEMPLATE/blog-post.md) | The skeleton itself. Its `##` headings are the parser's schema. |
-| [`.github/ISSUE_TEMPLATE/blog-post-draft.md`](.github/ISSUE_TEMPLATE/blog-post-draft.md) | Intake for a post that is already written. Skips the drafting lanes; its `sources` section stands in for the claims ledger. |
+| [`.github/ISSUE_TEMPLATE/blog-post-draft.md`](.github/ISSUE_TEMPLATE/blog-post-draft.md) | Written, but the technical content still needs checking. Goes through Technical review. |
+| [`.github/ISSUE_TEMPLATE/blog-post-complete.md`](.github/ISSUE_TEMPLATE/blog-post-complete.md) | Written *and* already technically sound. Copyedit, then Translations — skips Technical review. The common case for an already-written post. |
 
 When a change touches one of these, check whether it needs to touch the others. The process
 doc, the template, and the parse contract are three views of one agreement, and they drift

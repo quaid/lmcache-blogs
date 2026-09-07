@@ -1,23 +1,32 @@
 ---
-name: Blog post from an existing draft
-about: You already wrote the whole post. Skip the drafting lanes and go straight to review.
+name: Blog post draft — needs technical review
+about: You wrote the post, but the technical content still wants checking before it goes out.
 title: "[blog][draft] "
-labels: ["blog", "draft"]
+labels: ["blog", "draft", "needs-tech-review"]
 ---
 
 <!--
-USE THIS ONE ONLY IF THE POST IS ALREADY WRITTEN.
+USE THIS ONE IF THE POST IS WRITTEN BUT THE TECHNICAL CONTENT STILL NEEDS
+CHECKING.
 
-If you have notes, an idea, or a PR you want written up, you want "Blog post
-from a PR" instead. That one takes about ten minutes and someone else does
-the writing.
+"Draft" here means exactly that: the writing is done, the verification is
+not. Maybe you wrote up someone else's work, or you are describing a system
+you do not own, or you would just rather a second pair of eyes confirmed the
+details before your name is on it.
 
-This template exists because a finished post should not go back through
-drafting. Your card skips Idea, Claimed, and Drafting and lands directly in
-the review lane you pick below.
+Pick a different template if:
 
-Most of this is one line per section. The one that takes real thought is
-"Where your claims come from" — read that one before you start.
+  - the technical content is already sound, because you built the thing or
+    because someone already reviewed it
+    -> "Finished blog post - ready for copyedit"
+  - you have notes or a PR and want someone else to write the post
+    -> "Blog post from a PR"
+
+Most posts that arrive already written belong in that first one. This
+template is for the case where a technical review is genuinely wanted.
+
+Your card skips Idea, Claimed, and Drafting and lands in the review lane you
+pick below.
 
 Do not delete any headings. The pipeline reads them by name. Leave a heading
 empty rather than removing it.
@@ -25,7 +34,7 @@ empty rather than removing it.
 
 ```yaml
 draft:                # link to the doc, or attach the file to this issue
-entry_lane: editorial # editorial | technical | translations
+entry_lane: editorial # editorial | technical
 author:
 language: en          # the language the DRAFT is written in: en, zh, ko, ja, de...
 post_type: how-to     # how-to | why-to | deep-dive | release-note
@@ -53,20 +62,19 @@ description, and it tells a reviewer what they are about to read. -->
 
 ## Which lane it should enter [CORE]
 
-<!-- Set `entry_lane` above and say why in a sentence.
+<!-- Set `entry_lane` above. One sentence of why is plenty.
 
-  editorial    — written and you are happy with it, nobody has edited it.
-                 This is the normal choice. Goes to Editorial review.
-  technical    — an editor has already been through it for structure and
-                 register, and what it needs is a correctness check.
-                 Goes to Technical review.
-  translations — it has been through editorial AND technical somewhere
-                 else, e.g. published on another site first, and all it
-                 needs is localizing. Goes to Translations.
+  editorial  — written, nobody has edited it. This is the normal choice.
+               Goes to Editorial review, then Technical review.
+  technical  — an editor has already been through it for structure and
+               register, and what it needs is the correctness check.
+               Goes straight to Technical review.
 
-Claiming a later lane than the draft has earned costs more time than it
-saves — it gets sent back, and the round trip is slower than the review you
-skipped. When you are unsure, pick editorial. -->
+Either way it passes through Technical review, because that is what this
+template is for. If it does not need technical review, you want the
+"Finished blog post - ready for copyedit" template instead.
+
+When unsure, pick editorial. -->
 
 ## Who has already reviewed it
 
@@ -74,24 +82,44 @@ skipped. When you are unsure, pick editorial. -->
 common one. If a reviewer's comments are in the doc, say so — that saves
 the next reviewer from re-raising the same points. -->
 
-## Where your claims come from [CORE]
+## Where your claims come from
 
-<!-- THIS IS THE FIELD THAT MATTERS MOST HERE, and it is the one thing this
-path needs that a generated draft gets for free.
+<!-- Optional, and there is no right format. Anything you put here makes the
+technical review faster and more accurate; leaving it empty is allowed and
+the review still happens.
 
-A generated draft arrives with a claims ledger: every factual assertion that
-did not come from the author's skeleton or the PR diff, listed with a pointer
-to where it appears. Technical review then just checks the ledger. Your draft
-does not have one, so without this section a reviewer has to re-verify the
-whole piece from scratch, and that is what turns "already written" into the
-slowest path instead of the fastest.
+What it is for: a reviewer's job is to check the claims in the post. Anything
+that tells them where a claim came from saves them rediscovering it. That is
+the whole idea.
 
-So: for each non-obvious factual claim in the post, where did it come from?
-A PR or commit, an issue, a benchmark you ran, a doc, a paper, a
-conversation. Bullet list is perfect. Link where you can.
+Use whatever matches how you already work — we do not know or care what you
+drafted in:
 
-Flag anything you are unsure of. "I think this is right but I did not verify
-it" is genuinely useful to a reviewer and costs you nothing. -->
+  - **Already in the post?** Say "links are inline" and skip the rest.
+  - **A bullet list here.** Claim, then where it came from. The most common
+    shape:
+      - the 3.2x figure -> benchmark in PR #1234, run on the H100 box
+      - the eviction behavior -> docs/design/v1/storage_backend/README.md
+      - "most deployments hit this" -> support threads, roughly a dozen
+  - **A pointer.** "Everything comes from PR #1234 and issue #987" is a
+    complete answer when it is true.
+  - **In the doc itself.** Comments, footnotes, a sources section at the
+    bottom — just say where to look.
+  - **Attach something.** A benchmark log, a spreadsheet, a transcript.
+
+Most valuable thing you can do here, if you do nothing else: **flag what you
+are least sure of.** "I believe this is right but I did not verify it
+myself" points the reviewer straight at the part that needs them, and costs
+you one line. -->
+
+## What you are least sure about
+
+<!-- Optional, and the single most useful line on this form. What in the post
+would you most want a reviewer to check? A number, a claim about how
+something behaves, a recommendation, a version constraint.
+
+"Nothing, I am confident in all of it" is a fine answer — though if that is
+true, the "Finished blog post" template is probably the faster path. -->
 
 ## Numbers and their conditions
 
