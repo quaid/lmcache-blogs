@@ -40,6 +40,8 @@ When a change touches one of these, check whether it needs to touch the others. 
 doc, the template, and the parse contract are three views of one agreement, and they drift
 silently.
 
+| [`docs/pipeline/board-routing.md`](docs/pipeline/board-routing.md) | Label-to-column routing, the totality guarantee, and the `PROJECT_TOKEN` secret the workflow needs. |
+
 ## Skills
 
 The PR flow has committed skills — use them rather than improvising:

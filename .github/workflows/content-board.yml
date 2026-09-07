@@ -1,0 +1,151 @@
+name: Content board
+
+# Keeps the content board in step with the issues.
+#
+# Three jobs, each closing a different way for work to get lost:
+#   route         -- an issue arrives or changes, so put its card in the right column
+#   sweep         -- catch anything the events missed, on a schedule
+#   ensure-labels -- the intake templates only apply labels that already exist,
+#                    so create any the templates declare but the repo lacks
+#
+# Board writes need a token with `project` scope. GITHUB_TOKEN cannot write to a
+# user-owned Projects V2 board, so a PROJECT_TOKEN secret is required. Setup and
+# the routing table are in docs/pipeline/board-routing.md.
+
+on:
+  issues:
+    types: [opened, reopened, labeled, unlabeled, edited]
+  schedule:
+    # Hourly. The event trigger does the real work; this is the safety net, and
+    # an hour is a tolerable worst case for a card being late to the board.
+    - cron: '17 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/workflows/content-board.yml'
+      - 'tools/board_router.py'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Decide and log, but change nothing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  # Serialize per issue so two rapid label edits cannot race to set the column.
+  # Scheduled and dispatch runs share one slot. Never cancel in progress: a
+  # half-applied routing decision is worse than a slow one.
+  group: content-board-${{ github.event.issue.number || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  # A missing PROJECT_TOKEN would make every other job fail one API call at a
+  # time, which reads like a transient outage. Say so once, plainly, up front.
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.check.outputs.has_token }}
+    steps:
+      - id: check
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$PROJECT_TOKEN" ]; then
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Content board routing is not active"
+              echo
+              echo "The \`PROJECT_TOKEN\` secret is not set, so cards cannot be"
+              echo "added to the board. GITHUB_TOKEN cannot write to a"
+              echo "user-owned Projects V2 board."
+              echo
+              echo "Setup: **docs/pipeline/board-routing.md**."
+              echo
+              echo "Issues are still being filed and labelled correctly; they"
+              echo "are just not reaching the board. Nothing is lost, and a"
+              echo "later sweep will place every one of them."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=Board routing inactive::PROJECT_TOKEN is not set; see docs/pipeline/board-routing.md"
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  route:
+    needs: preflight
+    if: needs.preflight.outputs.has_token == 'true' && github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Route the issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          python tools/board_router.py route \
+            --repo "${{ github.repository }}" \
+            --issue "${{ github.event.issue.number }}" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+  sweep:
+    needs: preflight
+    if: >-
+      needs.preflight.outputs.has_token == 'true' &&
+      github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Sweep every open issue onto the board
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          python tools/board_router.py sweep \
+            --repo "${{ github.repository }}" \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # GitHub silently drops an issue-template label that does not exist in the
+  # repo, which would leave every intake issue unlabelled and unroutable -- a
+  # failure with no error message anywhere. This job makes the templates
+  # self-healing: whatever they declare, the repo gets.
+  ensure-labels:
+    if: github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create any label the templates declare but the repo lacks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          declared=$(grep -h '^labels:' .github/ISSUE_TEMPLATE/*.md \
+            | sed 's/^labels: *//' \
+            | tr -d '[]"' \
+            | tr ',' '\n' \
+            | sed 's/^ *//;s/ *$//' \
+            | grep -v '^$' | sort -u)
+          existing=$(gh label list --limit 200 --json name -q '.[].name' | sort -u)
+          missing=$(comm -23 <(echo "$declared") <(echo "$existing") || true)
+          if [ -z "$missing" ]; then
+            echo "All template labels exist." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "### Created missing template labels" >> "$GITHUB_STEP_SUMMARY"
+          while read -r label; do
+            [ -z "$label" ] && continue
+            gh label create "$label" --color ededed \
+              --description "Auto-created: declared by an issue template" || true
+            echo "- \`$label\`" | tee -a "$GITHUB_STEP_SUMMARY"
+          done <<< "$missing"
+          echo "::warning title=Labels were missing::Created: $(echo "$missing" | tr '\n' ' ')"
