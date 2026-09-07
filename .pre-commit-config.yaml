@@ -1,0 +1,66 @@
+# Mirrors CI. Run locally with `pre-commit run --all-files`, or `uvx pre-commit run
+# --all-files` if pre-commit is not installed.
+#
+# The hook set is small on purpose: this repo is mostly prose today. The Python hooks
+# (SPDX header, ruff, isort, mypy) are configured now so they start enforcing LMCache's
+# standard the moment the first `.py` file lands, rather than after it has drifted.
+repos:
+- repo: local
+  hooks:
+  - id: check-skeleton-sync
+    name: Check the two skeleton copies are identical
+    entry: tools/check_skeleton_sync.sh
+    language: script
+    pass_filenames: false
+    always_run: true
+  - id: check-spdx-header
+    name: Check SPDX headers
+    entry: python tools/check_spdx_header.py
+    language: python
+    types: [python]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: trailing-whitespace
+    args: [--markdown-linebreak-ext=md]
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-json
+  - id: check-toml
+  - id: check-merge-conflict
+  - id: check-case-conflict
+  - id: mixed-line-ending
+    args: [--fix=lf]
+  - id: check-added-large-files
+    args: [--maxkb=2048]
+  - id: detect-private-key
+
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.4.1
+  hooks:
+  - id: codespell
+    additional_dependencies: ['tomli']
+    args: ['--toml', 'pyproject.toml']
+
+- repo: https://github.com/PyCQA/isort
+  rev: 6.0.1
+  hooks:
+  - id: isort
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.7
+  hooks:
+  - id: ruff
+    args: [--output-format, github, --fix]
+  - id: ruff-format
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: 'v1.17.1'
+  hooks:
+  - id: mypy
+    language_version: python3.12
+    args: [--config-file=pyproject.toml]
+    additional_dependencies:
+      - types-requests
+      - types-PyYAML
