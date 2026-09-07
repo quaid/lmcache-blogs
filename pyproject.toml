@@ -43,6 +43,10 @@ disallow_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
 [tool.codespell]
 # Words that are correct in this repo but look like typos.
 #   lmcache — the project name

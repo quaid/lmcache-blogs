@@ -64,3 +64,5 @@ repos:
     additional_dependencies:
       - types-requests
       - types-PyYAML
+      # So the test suite's own imports type-check.
+      - pytest

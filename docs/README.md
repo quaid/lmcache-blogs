@@ -7,6 +7,7 @@ Three documents, three audiences. Start with whichever describes you.
 | [`blog-submission-process.md`](blog-submission-process.md) | **A contributor who landed a PR.** The three intake paths, and what happens to your card after you submit. Start here. |
 | [`templates/blog-post-skeleton.md`](templates/blog-post-skeleton.md) | **The skeleton itself**, as a file you can download and fill in for intake path C. Byte-identical to the issue template. |
 | [`pipeline/skeleton-to-prompt.md`](pipeline/skeleton-to-prompt.md) | **Whoever is building or debugging the pipeline.** Parse contract, PR hydration, prompt assembly, output contract, claims ledger — plus the two smaller contracts for already-written posts. |
+| [`pipeline/board-routing.md`](pipeline/board-routing.md) | **Whoever is wondering why a card is where it is.** The label-to-column table, what happens to issues that fit no rule, and the one secret the automation needs. |
 
 ## The one-paragraph version
 
@@ -71,3 +72,6 @@ Named in the pipeline plan, still to be written:
 - The **Google Doc** copy of the skeleton for intake path B, and its link in the process doc.
 - The **parser** implementing the parse contract, across all three intake surfaces.
 - The **prompt assembler**: hydration, claims ledger, `QUESTION FOR AUTHOR` emission.
+- **Stall detection** — the process doc promises a nudge when a card waits on someone for
+  more than two days. Needs Slack. See "What this does not do" in
+  [`pipeline/board-routing.md`](pipeline/board-routing.md).

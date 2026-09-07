@@ -62,7 +62,9 @@ docs/README.md                        map of the docs
 docs/blog-submission-process.md       contributor-facing: the three intake paths
 docs/pipeline/                        machine-facing pipeline contracts
 docs/templates/blog-post-skeleton.md  attachable copy of the skeleton (intake path C)
-tools/                                repo invariant checks used by pre-commit
+tools/                                repo invariant checks, and the board router
+tests/                                pytest suite for the pipeline tooling
+.github/workflows/content-board.yml   routes issues onto the content board
 .claude/skills/                        committed agent skills for the PR flow
 ```
 
@@ -134,6 +136,10 @@ pre-commit run --all-files
 
 # If pre-commit is not installed
 uvx pre-commit run --all-files
+
+# Tests for the pipeline tooling
+pip install -r requirements/test.txt
+pytest tests/ -q
 ```
 
 The hook set is deliberately small while this repo is mostly prose: whitespace and
@@ -231,6 +237,13 @@ one that gets published wrong.
   open questions does not advance to editorial.
 - **Respect the brand boundary.** LMCache content is LMCache-canonical. Tensormesh does not
   originate LMCache content. If a piece's placement is unclear, ask rather than assume.
+- **Routing decisions must stay total.** `route()` in `tools/board_router.py` returns a
+  decision for every possible set of labels, with a reason, and an issue it cannot place is
+  labelled `needs-triage` and commented on rather than dropped. If you add a branch, add the
+  test alongside it: `tests/test_board_router.py` asserts totality exhaustively, and that
+  property is the point of the router. Never introduce a silent fall-through, and never let
+  the router guess a review lane — guessing skips a review on something about to be
+  published.
 - **Do not mutate the upstream LMCache board.** Issues and PRs in `LMCache/LMCache` are
   read-only reference. Comment substantively when you have something useful to add; never
   relabel, assign, transition, or close an issue this project does not own.
