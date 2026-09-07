@@ -6,7 +6,7 @@ Three documents, three audiences. Start with whichever describes you.
 |---|---|
 | [`blog-submission-process.md`](blog-submission-process.md) | **A contributor who landed a PR.** The three intake paths, and what happens to your card after you submit. Start here. |
 | [`templates/blog-post-skeleton.md`](templates/blog-post-skeleton.md) | **The skeleton itself**, as a file you can download and fill in for intake path C. Byte-identical to the issue template. |
-| [`pipeline/skeleton-to-prompt.md`](pipeline/skeleton-to-prompt.md) | **Whoever is building or debugging the pipeline.** Parse contract, PR hydration, prompt assembly, output contract, claims ledger. |
+| [`pipeline/skeleton-to-prompt.md`](pipeline/skeleton-to-prompt.md) | **Whoever is building or debugging the pipeline.** Parse contract, PR hydration, prompt assembly, output contract, claims ledger — plus the separate, smaller contract for an already-written draft. |
 
 ## The one-paragraph version
 
@@ -15,6 +15,10 @@ posts — they write a **skeleton**: rough notes, in their own language, about w
 and what was interesting about fixing it. The pipeline hydrates that skeleton with the PR's
 own metadata and diff, assembles a prompt, and generates a draft. A human editor and the
 original author review it before it goes out.
+
+The exception is a post that is already written. That takes the second issue template and
+skips the drafting lanes entirely — see path D in the process doc, and "The other template"
+in the parse contract.
 
 ## These three documents are one agreement
 
@@ -30,6 +34,16 @@ three angles, and they drift silently:
 
 Change one, check the other two. A PR that touches a heading without touching the parse
 contract table will be sent back — see the checklist in [`../AGENTS.md`](../AGENTS.md).
+
+## The two issue templates
+
+| Template | For | Enters at |
+|---|---|---|
+| `.github/ISSUE_TEMPLATE/blog-post.md` | notes about a PR; someone else writes the post | Drafting |
+| `.github/ISSUE_TEMPLATE/blog-post-draft.md` | a finished post that needs review, not writing | the review lane the author claims |
+
+Only the first has a downloadable copy under `templates/`, because only the first has an
+intake path that hands you a file to fill in offline. A finished draft is already a file.
 
 ## Where the skeleton lives
 

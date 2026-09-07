@@ -1,11 +1,14 @@
 # How to get a blog post written
 
-Three ways in. All three end in the same place: a card on the board with a
-skeleton attached. Pick whichever is least annoying for you.
+Four ways in. Three of them end in the same place: a card on the board with
+a skeleton attached. Pick whichever is least annoying for you.
 
 **You do not write the post.** You write a skeleton — rough notes in your
 own language — and the pipeline plus an editor turn it into a post. You
 review it before it goes out.
+
+Unless you already did. If the post is written, skip to
+[Path D](#path-d--you-already-wrote-the-whole-post).
 
 **Write in your own language.** Do not translate for us. Translating on the
 way in loses the details that make a post good, and we localize on the way
@@ -77,11 +80,34 @@ want this in the same PR as your code.
 
 ---
 
-## If you already wrote the whole post
+---
 
-Open an issue, attach or link it, and say so. It skips the idea and drafting
-columns and drops straight into **Editorial review**, or into **Translations**
-if it is already been through editorial elsewhere.
+## Path D — you already wrote the whole post
+
+Best for: the post exists. You wrote it on a plane, or it went out on your own
+blog first, or you drafted it for a talk. Do not put a finished post back
+through drafting.
+
+1. Open a new issue and choose **Blog post from an existing draft**.
+2. Link the draft, or drag the file onto the issue.
+3. Pick the lane it should enter — `editorial`, `technical`, or `translations`.
+   Editorial is the normal choice; the template explains the other two.
+4. Fill in **Where your claims come from**. This is the one section that
+   carries real weight on this path, and it is worth explaining why.
+
+   A generated draft arrives with a claims ledger: every assertion that did
+   not come from the skeleton or the diff, listed with a pointer to where it
+   appears. Technical review just checks the ledger. Your draft has no
+   ledger, so if you skip this section a reviewer has to re-verify the whole
+   piece from scratch — which makes "already written" the *slowest* path
+   instead of the fastest. A bullet list of sources fixes that.
+
+5. Submit. Your card skips **Idea**, **Claimed**, and **Drafting** and lands
+   in the lane you picked.
+
+Claiming a later lane than the draft has earned does not save time: it gets
+sent back, and the round trip is slower than the review you tried to skip.
+When unsure, pick editorial.
 
 ## If it is not about a PR
 
@@ -93,7 +119,15 @@ that carry the piece.
 
 ```
 Idea → Claimed → Drafting → Editorial review → Technical review → Translations → Published
+                    ↑              ↑                   ↑                ↑
+                Paths A/B/C     Path D            Path D            Path D
+                                (editorial)       (technical)       (translations)
 ```
+
+Seven columns. Paths A, B, and C all enter at **Drafting**. Path D enters at
+whichever review lane you claimed. **Idea** and **Claimed** are the lanes for
+work nobody has started yet — no intake path lands there, they are where a
+post gets proposed and picked up.
 
 You get a Slack DM when your card moves and when something needs you. If a
 card sits waiting on you for more than two days, you get a nudge.

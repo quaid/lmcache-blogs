@@ -189,6 +189,83 @@ RETURN
 {output_contract}
 ```
 
+## The other template: an existing draft
+
+Path D (`.github/ISSUE_TEMPLATE/blog-post-draft.md`) is a different contract.
+Nothing on this path goes through hydration or prompt assembly — the post
+already exists — so the generator is not involved at all. What the pipeline
+does is route the card and hand a reviewer enough context to review.
+
+Same mechanics as above: split on `^## `, strip HTML comments, strip the
+` [CORE]` suffix, read the fenced `yaml` block as front matter.
+
+| Draft field | Machine key | Required |
+|---|---|---|
+| front matter | `meta.*` | `draft`, `entry_lane`, `author`, `language`, `placement` |
+| Where the draft is | `draft_location` | **yes** |
+| What it says in one sentence | `oneliner` | **yes** |
+| Which lane it should enter | `entry_lane_why` | **yes** |
+| Who has already reviewed it | `prior_review` | no |
+| Where your claims come from | `sources` | **yes** |
+| Numbers and their conditions | `numbers` | no |
+| Images and assets | `assets` | no |
+| Who should care and what should they do | `cta` | **yes** |
+| What is still open | `open` | no |
+| Placement | `placement_why` | no |
+| Notes for the editor | `editor_notes` | no — **never rendered** |
+
+Four keys — `oneliner`, `numbers`, `cta`, `open`, `editor_notes` — are shared
+with the skeleton contract and mean the same thing, so a parser can use one
+field map for both templates.
+
+### Routing
+
+`meta.entry_lane` sets the column, and it is the only thing on this path that
+moves a card:
+
+| `entry_lane` | Column |
+|---|---|
+| `editorial` | Editorial review |
+| `technical` | Technical review |
+| `translations` | Translations |
+
+Anything else is a validation error, not a default. Route the card to
+Editorial review and say why in a comment, rather than guessing at what the
+author meant.
+
+### `sources` replaces the claims ledger
+
+This is the load-bearing difference, and the reason the field is required.
+
+A generated draft carries a claims ledger: every assertion not traceable to
+the skeleton, the diff, or a linked issue, listed with a pointer to where it
+appears. That is what makes technical review a bounded task.
+
+A human-written draft has no ledger and cannot be given one after the fact —
+nothing knows which sentences were sourced and which were remembered. `sources`
+is the author supplying by hand what the generator would have emitted. Treat a
+`sources` section that is empty or says only "it is all from the PR" the same
+way an empty required field is treated on the skeleton path:
+
+```
+QUESTION FOR AUTHOR — sources
+[name the specific claims in the draft that need a source, quoting them]
+```
+
+Do not fill the gap by verifying the claims yourself, and do not advance the
+card. An unsourced finished draft is more expensive to review than a skeleton
+is to write, which is the whole reason the field exists.
+
+### What still applies
+
+The rules that are about publishing rather than generating hold on this path
+too, and technical review enforces them against the draft as written:
+
+- No number without its conditions in the same sentence or the adjacent one.
+- `editor_notes` is never rendered.
+- `meta.placement` decides LMCache-canonical versus Tensormesh, and Tensormesh
+  does not originate LMCache content.
+
 ## Human feedback loops
 
 Every edit made downstream is signal. Three capture points, per the
