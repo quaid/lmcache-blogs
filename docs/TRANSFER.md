@@ -28,6 +28,33 @@ happened.
 
 This is the one that bites, because nothing errors.
 
+### The board cannot be transferred, but it can be copied
+
+There is no `transferProjectV2`. The GraphQL schema has no such mutation —
+checked by introspection, not assumed — and a board stays with the account that
+created it, permanently.
+
+`copyProjectV2` does exist, takes an `ownerId`, and that owner may be an
+organization. A copy carries **more than is obvious**:
+
+| Copied | Not copied |
+|---|---|
+| Views | **Existing items** — real issues and PRs |
+| Custom fields, **including `Status` and its column options** | Collaborators |
+| Configured workflows, *except* auto-add workflows | Repository and team links |
+| Insights | |
+| Draft issues, only if asked | |
+
+Copying is worth doing rather than rebuilding by hand, for one specific reason:
+**the router matches columns by name and raises if one is missing.** Retyping
+seven column names is an invitation to land `Editorial Review` where the code
+expects `Editorial review`, and find out when the first card fails to route. A
+copy reproduces them exactly.
+
+That the items do not come across costs nothing here — the hourly sweep adds
+every open issue that is not already on the board, so the cards rebuild
+themselves on the next run.
+
 ## Before the transfer
 
 1. **Karsten needs membership in the LMCache org with permission to create
@@ -48,8 +75,25 @@ gh api -X POST repos/quaid/lmcache-blogs/transfer -f new_owner=LMCache
 
 ## After the transfer, in order
 
-1. **Create the board in the org.** A new Projects V2 board under `LMCache`,
-   with the seven columns in order:
+1. **Copy the board into the org**, rather than rebuilding it. From the board's
+   ⋯ menu → *Make a copy*, choosing `LMCache` as the owner — or:
+
+   ```bash
+   # The source board's node id, and the org's:
+   gh api graphql -f query='{ repositoryOwner(login:"quaid"){
+     ... on ProjectV2Owner { projectV2(number:5){ id } } } }'
+   gh api graphql -f query='{ organization(login:"LMCache"){ id } }'
+
+   gh api graphql -f query='
+     mutation($src: ID!, $owner: ID!, $title: String!) {
+       copyProjectV2(input: {projectId:$src, ownerId:$owner, title:$title}) {
+         projectV2 { number url }
+       }
+     }' -F src=<PROJECT_ID> -F owner=<ORG_ID> \
+        -F title="LMCache Blogs [Editorial Kanban]"
+   ```
+
+   Then confirm the seven columns survived, in order:
 
    ```
    Idea → Claimed → Drafting → Editorial review → Technical review → Translations → Published
@@ -57,6 +101,17 @@ gh api -X POST repos/quaid/lmcache-blogs/transfer -f new_owner=LMCache
 
    The names must match exactly — the router looks them up by name and raises
    rather than guessing if one is missing.
+
+   **Re-link the board to the repository**; links are not copied:
+
+   ```bash
+   gh api graphql -f query='
+     mutation($p: ID!, $r: ID!) {
+       linkProjectV2ToRepository(input: {projectId:$p, repositoryId:$r}) {
+         repository { nameWithOwner }
+       }
+     }' -F p=<NEW_PROJECT_ID> -F r=<REPO_ID>
+   ```
 
 2. **Set `BOARD_NUMBER`** (Settings → Secrets and variables → Actions →
    Variables) to the new board's number. Leave `BOARD_OWNER` unset; it defaults
@@ -69,10 +124,14 @@ gh api -X POST repos/quaid/lmcache-blogs/transfer -f new_owner=LMCache
    PAT with the org-level `Projects` permission scoped to this one repository**,
    or by a GitHub App. Swap it, then revoke the old classic token.
 
-4. **Move the two open issues' cards**, or just let the hourly sweep do it — it
-   routes any open issue that is not already on the board.
+4. **Let the sweep rebuild the cards.** Copying a board does not bring its
+   items, so the new board starts empty. The hourly sweep adds every open issue
+   that is not already on it; no card needs moving by hand.
 
-5. **Dry-run before trusting it:**
+5. **Archive or delete the old board** once the new one is routing, so nobody
+   files against a board that nothing writes to any more.
+
+6. **Dry-run before trusting it:**
 
    ```bash
    gh workflow run content-board.yml --repo LMCache/lmcache-blogs -f dry_run=true
@@ -83,7 +142,7 @@ gh api -X POST repos/quaid/lmcache-blogs/transfer -f new_owner=LMCache
    the dry run wants to file them under `Idea`, the routing table and the board
    disagree about something — fix that before a real run.
 
-6. **Re-point local clones** (optional; the redirect handles it):
+7. **Re-point local clones** (optional; the redirect handles it):
 
    ```bash
    git remote set-url origin git@github.com:LMCache/lmcache-blogs.git
