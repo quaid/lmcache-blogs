@@ -102,16 +102,34 @@ gh api -X POST repos/quaid/lmcache-blogs/transfer -f new_owner=LMCache
    The names must match exactly — the router looks them up by name and raises
    rather than guessing if one is missing.
 
-   **Re-link the board to the repository**; links are not copied:
+   **Link the board to `lmcache-blogs`, and only to it.** Links are not copied,
+   so a copied board starts linked to nothing.
 
    ```bash
+   # The blogs repo's node id -- check the output says lmcache-blogs
+   gh api graphql -f query='{ repository(owner:"LMCache", name:"lmcache-blogs"){
+     id nameWithOwner } }'
+
    gh api graphql -f query='
      mutation($p: ID!, $r: ID!) {
        linkProjectV2ToRepository(input: {projectId:$p, repositoryId:$r}) {
          repository { nameWithOwner }
        }
-     }' -F p=<NEW_PROJECT_ID> -F r=<REPO_ID>
+     }' -F p=<NEW_PROJECT_ID> -F r=<BLOGS_REPO_ID>
    ```
+
+   **Do not link it to `LMCache/LMCache`.** The engine repo's Projects tab is
+   for engine work; an editorial board with columns like *Translations* and
+   *Published* appearing there is noise for every contributor who opens it, and
+   it invites blog issues being filed against the engine repo.
+
+   A note on what "in the repo" can and cannot mean here: **a repository cannot
+   own a board.** `ProjectV2Owner` resolves to an Organization or a User and
+   nothing else — `Repository` is not among them, checked by introspection. So
+   the board is owned by the `LMCache` org no matter what, and lives at
+   `github.com/orgs/LMCache/projects/N`. Linking is the whole of the control
+   available: it is what makes the board appear on the blogs repo's Projects
+   tab, and what keeps it off everyone else's.
 
 2. **Set `BOARD_NUMBER`** (Settings → Secrets and variables → Actions →
    Variables) to the new board's number. Leave `BOARD_OWNER` unset; it defaults
