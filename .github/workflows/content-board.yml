@@ -56,8 +56,23 @@ jobs:
       - id: check
         env:
           PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          BOARD_NUMBER: ${{ vars.BOARD_NUMBER }}
         run: |
-          if [ -z "$PROJECT_TOKEN" ]; then
+          if [ -z "$BOARD_NUMBER" ]; then
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Content board routing is not active"
+              echo
+              echo "The \`BOARD_NUMBER\` repository variable is not set, so"
+              echo "there is no board to route to. It has no default because"
+              echo "project numbers are reused across accounts -- a guess would"
+              echo "write cards onto someone else's board rather than fail."
+              echo
+              echo "Set it under Settings -> Secrets and variables -> Actions"
+              echo "-> Variables. See **docs/pipeline/board-routing.md**."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=Board routing inactive::BOARD_NUMBER variable is not set; see docs/pipeline/board-routing.md"
+          elif [ -z "$PROJECT_TOKEN" ]; then
             echo "has_token=false" >> "$GITHUB_OUTPUT"
             {
               echo "### Content board routing is not active"
@@ -92,6 +107,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          # Defaults to this repository's owner, so a transfer needs no edit.
+          BOARD_OWNER: ${{ vars.BOARD_OWNER }}
+          BOARD_NUMBER: ${{ vars.BOARD_NUMBER }}
         run: |
           python tools/board_router.py route \
             --repo "${{ github.repository }}" \
@@ -113,6 +131,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          BOARD_OWNER: ${{ vars.BOARD_OWNER }}
+          BOARD_NUMBER: ${{ vars.BOARD_NUMBER }}
         run: |
           python tools/board_router.py sweep \
             --repo "${{ github.repository }}" \

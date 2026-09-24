@@ -26,12 +26,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 # Third Party
 from board_router import (  # noqa: E402
+    BOARD_NUMBER_ENV,
+    BOARD_OWNER_ENV,
     COLUMN_DRAFTING,
     COLUMN_EDITORIAL,
     COLUMN_IDEA,
     COLUMN_TECHNICAL,
     TEMPLATE_LABELS,
     Decision,
+    board_location,
     parse_entry_lane,
     route,
 )
@@ -224,3 +227,75 @@ class TestParseEntryLane:
     def test_blank_value_returns_none(self) -> None:
         """An author who deleted the value gets the documented default."""
         assert parse_entry_lane("entry_lane:\nauthor: kw") is None
+
+
+class TestBoardLocation:
+    """Resolving which board to write to.
+
+    This is what makes the repository survive a transfer: nothing about the
+    board's location is compiled in.
+    """
+
+    def test_owner_defaults_to_the_repo_owner(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The common case: board and repo under the same account or org."""
+        monkeypatch.delenv(BOARD_OWNER_ENV, raising=False)
+        monkeypatch.setenv(BOARD_NUMBER_ENV, "5")
+        assert board_location("LMCache/lmcache-blogs") == ("LMCache", 5)
+
+    def test_owner_default_follows_a_transfer(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Same code, new owner, no edit required.
+
+        This is the property the whole change exists for: moving the repo
+        changes the resolved owner without anyone touching the source.
+        """
+        monkeypatch.delenv(BOARD_OWNER_ENV, raising=False)
+        monkeypatch.setenv(BOARD_NUMBER_ENV, "5")
+        assert board_location("quaid/lmcache-blogs")[0] == "quaid"
+        assert board_location("LMCache/lmcache-blogs")[0] == "LMCache"
+
+    def test_explicit_owner_wins(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """For a board that lives under a different owner than the repo."""
+        monkeypatch.setenv(BOARD_OWNER_ENV, "LMCache")
+        monkeypatch.setenv(BOARD_NUMBER_ENV, "3")
+        assert board_location("quaid/lmcache-blogs") == ("LMCache", 3)
+
+    def test_missing_number_raises_rather_than_guessing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The failure that matters.
+
+        Project numbers are small integers reused across every account on
+        GitHub, so a default would not fail loudly -- it would write cards onto
+        somebody else's board. Unset must raise.
+        """
+        monkeypatch.delenv(BOARD_OWNER_ENV, raising=False)
+        monkeypatch.delenv(BOARD_NUMBER_ENV, raising=False)
+        with pytest.raises(RuntimeError, match=BOARD_NUMBER_ENV):
+            board_location("LMCache/lmcache-blogs")
+
+    @pytest.mark.parametrize("bad", ["", "   ", "abc", "5.5", "0", "-1"])
+    def test_rejects_a_number_that_is_not_a_positive_integer(
+        self, monkeypatch: pytest.MonkeyPatch, bad: str
+    ) -> None:
+        monkeypatch.delenv(BOARD_OWNER_ENV, raising=False)
+        monkeypatch.setenv(BOARD_NUMBER_ENV, bad)
+        with pytest.raises(RuntimeError):
+            board_location("LMCache/lmcache-blogs")
+
+    def test_rejects_a_repo_that_is_not_owner_slash_name(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv(BOARD_OWNER_ENV, raising=False)
+        monkeypatch.setenv(BOARD_NUMBER_ENV, "5")
+        with pytest.raises(RuntimeError, match="owner/name"):
+            board_location("lmcache-blogs")
+
+    def test_whitespace_is_tolerated(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A value pasted from a settings page often carries a space."""
+        monkeypatch.setenv(BOARD_OWNER_ENV, "  LMCache  ")
+        monkeypatch.setenv(BOARD_NUMBER_ENV, " 7 ")
+        assert board_location("quaid/x") == ("LMCache", 7)
