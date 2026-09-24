@@ -1,5 +1,5 @@
 <!-- Thanks for your contribution! A few tips:
-1. Read CONTRIBUTING.md before submitting: https://github.com/quaid/lmcache-blogs/blob/main/CONTRIBUTING.md#changing-the-pipeline
+1. Read CONTRIBUTING.md before submitting: ../blob/main/CONTRIBUTING.md#changing-the-pipeline
 2. Base this PR against `main`. Every commit needs a DCO sign-off (`git commit -s`) and no AI co-author trailer -- and none in this PR body either. Maintainer commits carry two sign-offs; see AGENTS.md.
 3. Start the title with a type tag: [Doc], [Bugfix], [Core], [CI], [Build], [Test], [Misc] — or docs:, fix:, feat:, ci:, chore:.
 4. If this PR closes an issue, add 'Fixes #<issue number>'. 'Refs #<issue number>' links it without closing.

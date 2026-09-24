@@ -5,7 +5,8 @@ happens to the ones that do not fit any rule.
 
 The mechanism is `.github/workflows/content-board.yml` plus
 [`tools/board_router.py`](../../tools/board_router.py). The board is
-**LMCache Blogs [Editorial Kanban]**, project 5 under `quaid`.
+**LMCache Blogs [Editorial Kanban]**. Which board that is, is resolved at
+runtime rather than compiled in — see [Locating the board](#locating-the-board).
 
 ## Setup — one secret, and it is required
 
@@ -13,27 +14,36 @@ The mechanism is `.github/workflows/content-board.yml` plus
 workflow permission that grants it; Projects V2 is outside the repository
 permission model. So the workflow needs its own token.
 
-### It has to be a classic token
+### Which token, and it depends on who owns the board
 
-**A fine-grained PAT cannot do this**, and it is worth being precise about why,
-because the natural assumption is that it can.
+Fine-grained PATs expose a `Projects` permission **only under Organization
+permissions**. There is no account-level equivalent. That one fact decides the
+answer:
 
-Fine-grained tokens expose a `Projects` permission only under **Organization
-permissions**. There is no account-level equivalent, so a fine-grained token has
-no way to express "read and write my *user-owned* projects" — and this board is
-user-owned (`github.com/users/quaid/projects/5`). The permission is not hidden
-somewhere in the UI; it does not exist. It is a
-[long-standing open request](https://github.com/orgs/community/discussions/36441),
-not an oversight.
+| Board owner | Token |
+|---|---|
+| **An organization** | a **fine-grained** PAT with the org-level `Projects` permission, scoped to this one repository — or a GitHub App installation |
+| **A user account** | a **classic** PAT with the `project` scope, and nothing narrower exists |
 
-So:
+For a user-owned board a fine-grained token has no way to express "read and
+write my projects". The permission is not hidden somewhere in the UI; it does
+not exist, and it is a
+[long-standing open request](https://github.com/orgs/community/discussions/36441)
+rather than an oversight.
+
+**This is a real argument for an org-owned board.** A classic `project` token
+cannot be narrowed to one project or one repository: it can read and write
+*every* project the account can reach. Moving the board under an organization is
+what makes the narrow credential available — it is not merely tidier.
+
+So, for a user-owned board:
 
 1. Create a **classic** personal access token with the **`project`** scope
    (Settings → Developer settings → Personal access tokens → Tokens (classic)).
 2. Add it to this repo as a secret named `PROJECT_TOKEN`:
 
    ```bash
-   gh secret set PROJECT_TOKEN --repo quaid/lmcache-blogs
+   gh secret set PROJECT_TOKEN --repo <owner>/lmcache-blogs
    ```
 
    It prompts for the value. Avoid `--body "<token>"`, which puts the token in
@@ -42,19 +52,31 @@ So:
 
 **Accept the tradeoff knowingly:** classic `project` scope is not scopeable to
 one project or one repository. The token can read and write *every* project the
-account can reach. That is the cost of a user-owned board, and it is the reason
-the alternative below is worth considering.
+account can reach. That is the cost of a user-owned board.
 
-### The alternative: move the board to the org
+## Locating the board
 
-If the board moves under the **LMCache organization**, the good options open up —
-a fine-grained PAT with the org-level `Projects` permission, scoped to this
-repository, or a GitHub App installation. Both are narrower than a classic
-token.
+Nothing about the board's address is compiled into the router. It reads two
+environment variables, set as repository **variables** (Settings → Secrets and
+variables → Actions → Variables):
 
-That is an ownership decision rather than a technical one, so it is not made
-here. But if the broad scope of a classic token is a problem, moving the board
-is the fix, not a different token.
+| Variable | Required | Meaning |
+|---|---|---|
+| `BOARD_NUMBER` | **yes** | The project's number. |
+| `BOARD_OWNER` | no | The login that owns the board. Defaults to this repository's owner. |
+
+`BOARD_OWNER` defaulting to the repository's owner is what lets this repository
+be transferred without a code change: move the repo, and the resolved owner
+moves with it. Set it explicitly only when the board lives under a different
+account than the repository.
+
+`BOARD_NUMBER` has **no default, on purpose.** Project numbers are small
+integers reused across every account on GitHub, so a guessed value would not
+fail — it would quietly write cards onto a stranger's board. Unset is an error,
+and `preflight` reports it the same way it reports a missing token.
+
+The GraphQL uses `repositoryOwner`, which resolves a user or an organization
+identically, so the router does not care which kind of account holds the board.
 
 **Until that secret exists, routing does not happen** — and the workflow says so
 loudly rather than failing one API call at a time and looking like an outage.
@@ -149,10 +171,10 @@ export GH_TOKEN=$(gh auth token)
 export PROJECT_TOKEN=<a token with project scope>
 
 # What would happen, changing nothing
-python tools/board_router.py sweep --repo quaid/lmcache-blogs --dry-run
+python tools/board_router.py sweep --repo <owner>/lmcache-blogs --dry-run
 
 # One issue
-python tools/board_router.py route --repo quaid/lmcache-blogs --issue 12 --dry-run
+python tools/board_router.py route --repo <owner>/lmcache-blogs --issue 12 --dry-run
 ```
 
 Tests:

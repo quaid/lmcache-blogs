@@ -10,7 +10,7 @@ original author review it before it goes out.
 
 ## I landed a PR and it deserves a post
 
-[Open an issue](https://github.com/quaid/lmcache-blogs/issues/new/choose) and choose **Blog
+[Open an issue](../../issues/new/choose) and choose **Blog
 post from a PR**. Fill in the five sections marked `[CORE]`. Ten minutes is a normal amount
 of time to spend, and a draft comes back to you within a day.
 

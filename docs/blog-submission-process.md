@@ -33,7 +33,7 @@ Best for: most people, most of the time. Fastest path if you are already in
 GitHub.
 
 1. Go to the content board and [open a new
-   issue](https://github.com/quaid/lmcache-blogs/issues/new/choose). Choose
+   issue](../../../issues/new/choose). Choose
    **Blog post from a PR**.
 2. Fill in the YAML block at the top — the PR link and your name are the
    only ones that matter.
@@ -76,7 +76,7 @@ want this in the same PR as your code.
 
 1. Grab the skeleton from this repo — [`docs/templates/blog-post-skeleton.md`](templates/blog-post-skeleton.md),
    or download it straight from
-   [raw](https://raw.githubusercontent.com/quaid/lmcache-blogs/main/docs/templates/blog-post-skeleton.md)
+   [raw](../../../raw/main/docs/templates/blog-post-skeleton.md)
    — or write plain markdown using the same `##` headings.
 2. Fill it in.
 3. Either:

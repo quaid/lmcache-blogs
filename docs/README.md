@@ -7,6 +7,7 @@ Three documents, three audiences. Start with whichever describes you.
 | [`blog-submission-process.md`](blog-submission-process.md) | **A contributor who landed a PR.** The three intake paths, and what happens to your card after you submit. Start here. |
 | [`templates/blog-post-skeleton.md`](templates/blog-post-skeleton.md) | **The skeleton itself**, as a file you can download and fill in for intake path C. Byte-identical to the issue template. |
 | [`pipeline/skeleton-to-prompt.md`](pipeline/skeleton-to-prompt.md) | **Whoever is building or debugging the pipeline.** Parse contract, PR hydration, prompt assembly, output contract, claims ledger — plus the two smaller contracts for already-written posts. |
+| [`TRANSFER.md`](TRANSFER.md) | **Whoever is moving this repo to the LMCache org.** What GitHub carries over, what silently does not (the board), and the ordered steps. |
 | [`pipeline/board-routing.md`](pipeline/board-routing.md) | **Whoever is wondering why a card is where it is.** The label-to-column table, what happens to issues that fit no rule, and the one secret the automation needs. |
 
 ## The one-paragraph version

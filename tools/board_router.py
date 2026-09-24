@@ -36,8 +36,19 @@ import re
 import subprocess
 import sys
 
-PROJECT_OWNER = "quaid"
-PROJECT_NUMBER = 5
+# The board is located at runtime, never hardcoded, so this repo survives being
+# transferred to another owner. See docs/pipeline/board-routing.md.
+#
+#   BOARD_OWNER  -- the login that owns the project. Defaults to the owner of
+#                   the repository being routed, which is right whenever the
+#                   board and the repo live under the same account or org.
+#   BOARD_NUMBER -- the project number. No default: a wrong guess would write
+#                   to somebody else's board, so an unset value is an error.
+#
+# The owner may be a user or an organization and the code does not care; the
+# GraphQL uses `repositoryOwner`, which resolves either.
+BOARD_OWNER_ENV = "BOARD_OWNER"
+BOARD_NUMBER_ENV = "BOARD_NUMBER"
 
 # The three blog intake templates, and the column each one enters. Path D is
 # refined further by its `entry_lane` front matter; see route().
@@ -262,8 +273,62 @@ def graphql(query: str, token_env: str = "PROJECT_TOKEN", **variables: str) -> d
     return data
 
 
-def board_context() -> tuple[str, str, dict[str, str]]:
+def board_location(repo: str) -> tuple[str, int]:
+    """Resolve which project board to write to.
+
+    Reads ``BOARD_OWNER`` and ``BOARD_NUMBER`` from the environment. The owner
+    defaults to the owner of ``repo``, which is correct whenever the board and
+    the repository sit under the same account or organization -- including
+    after the repository is transferred, which is the point of not hardcoding
+    it.
+
+    ``BOARD_NUMBER`` has no default on purpose. Project numbers are small
+    integers that are reused across every account on GitHub, so a guessed value
+    would not fail: it would quietly write cards onto a stranger's board.
+
+    Args:
+        repo: Repository in ``owner/name`` form.
+
+    Returns:
+        A tuple of (owner login, project number).
+
+    Raises:
+        RuntimeError: If ``BOARD_NUMBER`` is unset or is not a positive
+            integer, or if ``repo`` is not in ``owner/name`` form.
+    """
+    owner = os.environ.get(BOARD_OWNER_ENV, "").strip()
+    if not owner:
+        if "/" not in repo:
+            raise RuntimeError(
+                f"cannot infer the board owner: {repo!r} is not owner/name, and "
+                f"{BOARD_OWNER_ENV} is unset"
+            )
+        owner = repo.split("/", 1)[0]
+
+    raw = os.environ.get(BOARD_NUMBER_ENV, "").strip()
+    if not raw:
+        raise RuntimeError(
+            f"{BOARD_NUMBER_ENV} is not set. It has no default because project "
+            "numbers are reused across accounts, so a guess would write to the "
+            "wrong board rather than fail. Set it to the board's number; see "
+            "docs/pipeline/board-routing.md."
+        )
+    try:
+        number = int(raw)
+    except ValueError:
+        raise RuntimeError(
+            f"{BOARD_NUMBER_ENV} must be an integer, got {raw!r}"
+        ) from None
+    if number < 1:
+        raise RuntimeError(f"{BOARD_NUMBER_ENV} must be positive, got {number}")
+    return owner, number
+
+
+def board_context(repo: str) -> tuple[str, str, dict[str, str]]:
     """Fetch the board's ids and its Status option ids.
+
+    Args:
+        repo: Repository in ``owner/name`` form, used to resolve the board.
 
     Returns:
         A tuple of (project id, Status field id, mapping of column name to
@@ -273,23 +338,35 @@ def board_context() -> tuple[str, str, dict[str, str]]:
         RuntimeError: If the board has no Status field, which would mean the
             columns were never configured.
     """
+    owner, number = board_location(repo)
     data = graphql(
         """
         query($owner: String!, $number: Int!) {
-          user(login: $owner) {
-            projectV2(number: $number) {
-              id
-              field(name: "Status") {
-                ... on ProjectV2SingleSelectField { id options { id name } }
+          repositoryOwner(login: $owner) {
+            __typename
+            ... on ProjectV2Owner {
+              projectV2(number: $number) {
+                id
+                field(name: "Status") {
+                  ... on ProjectV2SingleSelectField { id options { id name } }
+                }
               }
             }
           }
         }
         """,
-        owner=PROJECT_OWNER,
-        number=str(PROJECT_NUMBER),
+        owner=owner,
+        number=str(number),
     )
-    project = data["user"]["projectV2"]
+    holder = data.get("repositoryOwner")
+    if not holder:
+        raise RuntimeError(f"no GitHub account or organization named {owner!r}")
+    project = holder.get("projectV2")
+    if not project:
+        raise RuntimeError(
+            f"{owner!r} ({holder.get('__typename', 'unknown')}) has no project "
+            f"number {number}, or the token cannot see it"
+        )
     field = project.get("field")
     if not field:
         raise RuntimeError(
@@ -299,13 +376,14 @@ def board_context() -> tuple[str, str, dict[str, str]]:
     return project["id"], field["id"], options
 
 
-def place_on_board(issue_node_id: str, column: str) -> None:
+def place_on_board(repo: str, issue_node_id: str, column: str) -> None:
     """Add an issue to the board and set its Status.
 
     Adding is idempotent: GitHub returns the existing item if the issue is
     already on the board, so a re-run moves the card rather than duplicating it.
 
     Args:
+        repo: Repository in ``owner/name`` form, used to resolve the board.
         issue_node_id: The issue's GraphQL node id.
         column: Target column name, which must exist on the board.
 
@@ -313,7 +391,7 @@ def place_on_board(issue_node_id: str, column: str) -> None:
         RuntimeError: If the column does not exist on the board. A routing table
             naming a column nobody created is a silent dead end, so it fails.
     """
-    project_id, field_id, options = board_context()
+    project_id, field_id, options = board_context(repo)
     if column not in options:
         raise RuntimeError(
             f"column {column!r} does not exist on the board. Present: {sorted(options)}"
@@ -420,35 +498,41 @@ def handle_issue(repo: str, number: int, dry_run: bool) -> Decision:
     if dry_run:
         return decision
     if decision.column is not None:
-        place_on_board(issue["id"], decision.column)
+        place_on_board(repo, issue["id"], decision.column)
     if decision.needs_triage:
         apply_triage(repo, number, decision.reason)
     return decision
 
 
-def board_issue_numbers() -> set[int]:
+def board_issue_numbers(repo: str) -> set[int]:
     """Return the issue numbers already present on the board.
+
+    Args:
+        repo: Repository in ``owner/name`` form, used to resolve the board.
 
     Returns:
         Numbers of every issue currently an item on the board. Pull requests and
         draft items are ignored.
     """
+    owner, number = board_location(repo)
     data = graphql(
         """
         query($owner: String!, $number: Int!) {
-          user(login: $owner) {
-            projectV2(number: $number) {
-              items(first: 100) {
-                nodes { content { ... on Issue { number } } }
+          repositoryOwner(login: $owner) {
+            ... on ProjectV2Owner {
+              projectV2(number: $number) {
+                items(first: 100) {
+                  nodes { content { ... on Issue { number } } }
+                }
               }
             }
           }
         }
         """,
-        owner=PROJECT_OWNER,
-        number=str(PROJECT_NUMBER),
+        owner=owner,
+        number=str(number),
     )
-    nodes = data["user"]["projectV2"]["items"]["nodes"]
+    nodes = data["repositoryOwner"]["projectV2"]["items"]["nodes"]
     return {
         node["content"]["number"]
         for node in nodes
@@ -486,7 +570,7 @@ def sweep(repo: str, dry_run: bool) -> int:
         ]
     )
     open_numbers = {entry["number"] for entry in json.loads(raw or "[]")}
-    on_board = board_issue_numbers()
+    on_board = board_issue_numbers(repo)
     missing = sorted(open_numbers - on_board)
 
     print(f"open issues: {len(open_numbers)}; on board: {len(on_board)}")

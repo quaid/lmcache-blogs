@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# macOS metadata — noise in any repo, and a directory-listing leak in a public one.
+.DS_Store
+**/.DS_Store
+
+# Local agent scratch output, never part of the pipeline.
+Claude outputs/
